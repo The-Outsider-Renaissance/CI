@@ -1,0 +1,12 @@
+# kubernetes/example-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: example
+spec:
+  selector:
+    app: example
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

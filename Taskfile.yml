@@ -1,0 +1,50 @@
+version: '3'
+silent: true
+tasks:
+  default:
+    cmds:
+      - task: repos
+      - task: start
+      - task: ingress
+      - task: deploy:example
+      - task: deploy:tunnel
+  start:
+    desc: Starts your local k3d cluster based on a file defined setup
+    preconditions:
+      - sh: "which k3d"
+        msg: "k3d {{.PATH_ERROR}}"
+    summary: |
+      Starts a k3d cluster based on configuration
+      as specs for the cluster to be provisioned upon.
+    cmds:
+      - k3d cluster delete --config config/cluster.yaml
+      - k3d cluster create --config config/cluster.yaml
+  tls:
+    desc: Uses Mkcert to generate local SSL/TLS certificates and installs on a cluster-wide level using Nginx-ingress.
+    dir: config/tls
+    cmds:
+      - rm cert.pem key.pem base/tls-secret.yaml ca.pem
+      - mkcert -cert-file cert.pem -key-file key.pem -p12-file p12.pem "*.k8s.localhost" localhost "*.localhost" ::1 127.0.0.1 localhost 127.0.0.1 "*.internal.localhost" "*.local" "*.power.local.gd" "*.local.gd" local.gd power.local.gd power.loca.it "*.power.loca.it" "*.loca.it"
+      - base64 {{if eq OS "darwin"}}-b{{else}}-w{{end}} 0 cert.pem > ca.pem
+      - kubectl config set-context --current --namespace=kube-system
+      - kubectl create secret tls tls-secret --cert=cert.pem --key=key.pem --dry-run=client -o yaml >base/tls-secret.yaml
+      - kubectl apply -k ./
+    ignore_error: true
+  ingress:
+    dir: config/ingress
+    cmds:
+      - helm install --namespace kube-system -f ingress-values.yaml ingress bitnami/nginx-ingress-controller
+  repos:
+    cmds:
+      - helm repo add bitnami https://charts.bitnami.com/bitnami
+      - helm repo update
+    ignore_error: true
+  deploy:example:
+    cmds:
+      - kubectl create namespace example
+      - kubectl apply -k ./example
+    ignore_error: true
+  deploy:tunnel:
+    cmds:
+      - npx localtunnel -s power --local-host power.local.gd -p 80
+    ignore_error: true
