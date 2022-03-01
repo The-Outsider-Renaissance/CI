@@ -2,14 +2,13 @@
 apiVersion: k3d.io/v1alpha4
 kind: Simple
 metadata:
-  name: k3d-testing 
+  name: testing
 servers: 1
-agents: 1
+agents: 2
 kubeAPI:
-  host: "power.local.gd"
   hostIP: "0.0.0.0"
   hostPort: "6446"
-image: rancher/k3s:v1.23.1-k3s2
+image: rancher/k3s:v1.21.5-k3s2
 network: vpn2
 token: DE32uLmDJgigCxko8uCPvicoG3SMHW4gBzT32mYz4 # Mock up key
 ports:
@@ -19,6 +18,14 @@ ports:
   - port: 443:443
     nodeFilters:
       - loadbalancer
+  - port: 8081:30080
+    nodeFilters:
+      - server:*
+      - agent:*
+  - port: 8082:30081
+    nodeFilters:
+      - server:*
+      - agent:*
 env:
   - envVar: bar=baz
     nodeFilters:
@@ -32,7 +39,7 @@ registries:
     mirrors:
       "registry.local.gd":
         endpoint:
-          - http://registry.local.gd:5000
+          - http://registry.local.gd:5001
 options:
   k3d:
     wait: true
@@ -45,7 +52,7 @@ options:
         - settings.workerConnections=2048
   k3s:
     extraArgs:
-      - arg:  --tls-san=localhost,registry.local.gd,registry.localhost,127.0.0.1,localhost,power.local.gd,registry.local.gd,gruber.local.gd
+      - arg:  --tls-san=localhost,registry.local.gd,registry.localhost,127.0.0.1,localhost,power.local.gd,registry.local.gd
         nodeFilters:
           - server:*
       - arg: --disable=traefik

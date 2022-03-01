@@ -1,0 +1,17 @@
+version: '3'
+silent: true
+tasks:
+  install:
+    cmds:
+      - kubectl config set-context --current --namespace=concourse
+      - helm uninstall concourse
+      - kubectl create namespace concourse
+      - kubectl config set-context --current --namespace=concourse
+      - task: install:server
+    ignore_error: true
+
+  install:server:
+    dirs: charts
+    cmds:
+      - helm install concourse concourse/concourse --namespace concourse --wait
+

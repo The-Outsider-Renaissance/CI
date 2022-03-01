@@ -1,5 +1,14 @@
 version: '3'
 silent: true
+
+dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+
+includes:
+  drone: ./charts/drone.yaml
+  gitlab: ./charts/gitlab.yaml
+  argo: ./charts/argo.yaml
+  concourse: ./charts/concourse.yaml
+
 tasks:
   default:
     cmds:
@@ -7,7 +16,7 @@ tasks:
       - task: start
       - task: ingress
       - task: deploy:example
-      - task: deploy:tunnel
+
   start:
     desc: Starts your local k3d cluster based on a file defined setup
     preconditions:
@@ -17,13 +26,14 @@ tasks:
       Starts a k3d cluster based on configuration
       as specs for the cluster to be provisioned upon.
     cmds:
-      - k3d cluster delete --config config/cluster.yaml
-      - k3d cluster create --config config/cluster.yaml
+      - k3d cluster delete testing
+      - k3d cluster create --config config/cluster.yaml --wait
+    ignore_error: true
   tls:
     desc: Uses Mkcert to generate local SSL/TLS certificates and installs on a cluster-wide level using Nginx-ingress.
     dir: config/tls
     cmds:
-      - rm cert.pem key.pem base/tls-secret.yaml ca.pem
+      - rm cert.pem key.pem ca.pem
       - mkcert -cert-file cert.pem -key-file key.pem -p12-file p12.pem "*.k8s.localhost" localhost "*.localhost" ::1 127.0.0.1 localhost 127.0.0.1 "*.internal.localhost" "*.local" "*.power.local.gd" "*.local.gd" local.gd power.local.gd power.loca.it "*.power.loca.it" "*.loca.it"
       - base64 {{if eq OS "darwin"}}-b{{else}}-w{{end}} 0 cert.pem > ca.pem
       - kubectl config set-context --current --namespace=kube-system
@@ -37,14 +47,15 @@ tasks:
   repos:
     cmds:
       - helm repo add bitnami https://charts.bitnami.com/bitnami
+      - helm repo add gitlab https://charts.gitlab.io/
+      - helm repo add drone https://charts.drone.io
+      - helm repo add gitea-charts https://dl.gitea.io/charts/
+      - helm repo add concourse https://concourse-charts.storage.googleapis.com/
       - helm repo update
     ignore_error: true
+
   deploy:example:
     cmds:
       - kubectl create namespace example
       - kubectl apply -k ./example
-    ignore_error: true
-  deploy:tunnel:
-    cmds:
-      - npx localtunnel -s power --local-host power.local.gd -p 80
     ignore_error: true

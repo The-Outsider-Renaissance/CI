@@ -1,2 +1,4 @@
-tls-secret.yaml
 *.pem
+.env
+charts/drone/deploy-runner.yaml
+charts/drone/server.yaml

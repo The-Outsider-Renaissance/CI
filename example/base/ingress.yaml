@@ -3,8 +3,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -16,9 +14,9 @@ spec:
             name: example
             port:
               number: 80
-        path: /
+        path: /task
         pathType: Prefix
   tls:
-  - hosts:
-    - power.local.gd
-    secretName: tls-secret
+    - hosts:
+      - power.local.gd
+      secretName: tls-secret
