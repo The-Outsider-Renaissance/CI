@@ -83,4 +83,4 @@ tasks:
       DRONE_POD:
         sh: echo $(kubectl get pods --namespace drone -l "app.kubernetes.io/name=powerdrone,app.kubernetes.io/instance=drone" -o jsonpath="{.items[0].metadata.name}")
     cmds:
-      -  kubectl --namespace drone port-forward $DRONE_POD 3000:80
+        -  kubectl --namespace drone port-forward $DRONE_POD 3000:80

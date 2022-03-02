@@ -2,3 +2,4 @@
 .env
 charts/drone/deploy-runner.yaml
 charts/drone/server.yaml
+config/vault/cluster-keys.json

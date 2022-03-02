@@ -51,6 +51,7 @@ tasks:
       - helm repo add drone https://charts.drone.io
       - helm repo add gitea-charts https://dl.gitea.io/charts/
       - helm repo add concourse https://concourse-charts.storage.googleapis.com/
+      - helm repo add hashicorp https://helm.releases.hashicorp.com
       - helm repo update
     ignore_error: true
 
@@ -58,4 +59,46 @@ tasks:
     cmds:
       - kubectl create namespace example
       - kubectl apply -k ./example
+    ignore_error: true
+
+  vault:
+    desc: Installs Hashicorp's Vault as a deployment ontop of your local Kubernetes cluster
+    preconditions:
+      - sh: "which jq"
+        msg: "On MacOS type 'brew install jq' to install the required dependency"
+    dir: config/vault
+    cmds:
+      - rm cluster-keys.json
+      - kubectl delete namespace vault  > /dev/null
+      - kubectl create namespace vault  > /dev/null
+      - kubectl config set-context --current --namespace=vault
+      - helm install vault hashicorp/vault --wait --namespace vault  > /dev/null
+      - sleep 20
+      - kubectl exec vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > cluster-keys.json
+      - kubectl apply -k ./
+      - echo -e "\nVault's Unseal Key:"
+      - cat cluster-keys.json | jq -r ".unseal_keys_b64[]"
+      - echo -e "\nVault's Root Token:"
+      - cat cluster-keys.json | jq -r ".root_token"
+      - echo "Go to https://vault.local.gd and unseal the Vault through the dashboard"
+      - echo "Now run 'task vault:set' to complete Vault's initialization AFTER unsealing the UI"
+    ignore_error: true
+
+  vault:set:
+    preconditions:
+      - sh: "which vault"
+        msg: "On MacOS type 'brew install vault' to install the required dependency Vault's CLI tool"
+    env:
+      VAULT_TOKEN:
+        sh: cat cluster-keys.json | jq -r ".root_token"
+      VAULT_ADDR: https://vault.local.gd
+      VAULT_SKIP_VERIFY: "true"
+    dir: config/vault
+    cmds:
+      - export VAULT_TOKEN={{.VAULT_TOKEN}}
+      - export VAULT_ADDR=https://vault.local.gd
+      - vault login $VAULT_TOKEN
+      - vault secrets enable -path=secret/ kv
+      - vault kv put secret/foo bar=baz
+      - vault kv get -format=json secret/foo
     ignore_error: true
