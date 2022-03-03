@@ -1,21 +1,15 @@
-kind: Role
+kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  namespace: default
   name: drone
 rules:
 - apiGroups:
   - ""
   resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-- apiGroups:
-  - ""
-  resources:
   - pods
   - pods/log
+  - namespaces
+  - secrets
   verbs:
   - get
   - create
@@ -25,16 +19,15 @@ rules:
   - update
 
 ---
-kind: RoleBinding
+kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: drone
-  namespace: default
 subjects:
 - kind: ServiceAccount
-  name: default
-  namespace: default
+  name: drone
+  namespace: drone
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: drone
   apiGroup: rbac.authorization.k8s.io

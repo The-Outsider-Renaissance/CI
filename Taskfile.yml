@@ -4,9 +4,6 @@ silent: true
 dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
 
 includes:
-  drone: ./charts/drone.yaml
-  gitlab: ./charts/gitlab.yaml
-  argo: ./charts/argo.yaml
   concourse: ./charts/concourse.yaml
 
 tasks:
@@ -47,9 +44,7 @@ tasks:
   repos:
     cmds:
       - helm repo add bitnami https://charts.bitnami.com/bitnami
-      - helm repo add gitlab https://charts.gitlab.io/
       - helm repo add drone https://charts.drone.io
-      - helm repo add gitea-charts https://dl.gitea.io/charts/
       - helm repo add concourse https://concourse-charts.storage.googleapis.com/
       - helm repo add hashicorp https://helm.releases.hashicorp.com
       - helm repo update

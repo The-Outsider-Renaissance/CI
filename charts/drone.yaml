@@ -1,8 +1,5 @@
 version: '3'
 silent: true
-vars:
-  DRONE_RPC:
-    sh: echo $(openssl rand -hex 16)
 tasks:
   install:
     cmds:
@@ -13,6 +10,7 @@ tasks:
       - task: install:server
       - task: generate:runner
       - task: install:runner
+      - kubectl wait --for=condition=available --timeout=600s deployment/powerdrone -n drone
       - task: bridge
     ignore_error: true
 
@@ -23,7 +21,7 @@ tasks:
   install:server:
     dirs: charts/drone
     cmds:
-      - helm install --namespace drone drone drone/drone -f charts/drone/server.yaml
+      - helm install --namespace drone drone drone/drone -f charts/drone/server.yaml --wait
   generate:runner:
     dirs: charts/drone
     cmds:
@@ -50,11 +48,15 @@ tasks:
                 - containerPort: 3000
                 env:
                 - name: DRONE_RPC_HOST
-                  value: {{.DRONE_URI}}
+                  value: host.k3d.internal:3000
                 - name: DRONE_RPC_PROTO
-                  value: https
+                  value: http
                 - name: DRONE_RPC_SECRET
-                  value: {{.DRONE_RPC}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                c }}
+                  value: {{.DRONE_RPC_SECRET}}
+                - name: DRONE_RPC_SKIP_VERIFY
+                  value: "true"
+                - name: DRONE_NAMESPACE_DEFAULT
+                  value: "drone"
         EOF
 
   generate:server:
@@ -71,7 +73,7 @@ tasks:
         env:
           DRONE_SERVER_HOST: {{.DRONE_URI}}
           DRONE_SERVER_PROTO: https
-          DRONE_RPC_SECRET: {{.DRONE_RPC}}
+          DRONE_RPC_SECRET: {{.DRONE_RPC_SECRET}}
           DRONE_GITHUB_CLIENT_ID: {{.DRONE_CLIENT_ID}}
           DRONE_GITHUB_CLIENT_SECRET: {{.DRONE_CLIENT_SECRET}}
           DRONE_GITHUB_ORG: {{.DRONE_USER_FILTER}}
