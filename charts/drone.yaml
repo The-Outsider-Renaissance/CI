@@ -41,6 +41,7 @@ tasks:
               labels:
                 app: drone-runner
             spec:
+              serviceAccountName: drone-runner
               containers:
               - name: runner
                 image: drone/drone-runner-kube:latest
