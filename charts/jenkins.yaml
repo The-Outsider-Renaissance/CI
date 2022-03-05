@@ -1,0 +1,63 @@
+version: '3'
+silent: true
+tasks:
+  install:
+    dirs: charts/jenkins
+    cmds:
+      - kubectl config set-context --current --namespace=jenkins
+      - task: rm:crd
+      - task: rm:operator
+      - kubectl create namespace jenkins
+      - kubectl config set-context --current --namespace=jenkins
+      - task: install:crd
+      - task: install:operator
+      - task: install:server
+      - task: show
+      - task: bridge
+    ignore_error: true
+
+  rm:crd:
+    dirs: charts
+    cmds:
+      - kubectl delete -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/config/crd/bases/jenkins.io_jenkins.yaml
+    ignore_error: true
+
+  rm:operator:
+    dirs: charts
+    cmds:
+      - kubectl delete -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/all-in-one-v1alpha2.yaml
+    ignore_error: true
+
+  install:crd:
+    dirs: charts
+    cmds:
+      - kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/config/crd/bases/jenkins.io_jenkins.yaml
+
+  install:operator:
+    dirs: charts
+    cmds:
+      - kubectl apply -f https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/deploy/all-in-one-v1alpha2.yaml
+
+  install:server:
+    dirs: charts/jenkins
+    cmds:
+      - kubectl apply -k ./charts/jenkins
+
+  show:
+    dirs: charts/jenkins
+    vars:
+      JENKINS_USER:
+        sh: echo $(kubectl get secret jenkins-operator-credentials-demo-ci -n jenkins -o 'jsonpath={.data.user}' | base64 -d)
+      JENKINS_PASSWORD:
+        sh: echo $(kubectl get secret jenkins-operator-credentials-demo-ci -n jenkins -o 'jsonpath={.data.password}' | base64 -d)
+    cmds:
+      - echo "Your user is {{.JENKINS_USER}}"
+      - echo "Your password is {{.JENKINS_PASSWORD}}"
+
+  bridge:
+    dirs: charts/jenkins
+    cmds:
+      - kubectl wait --for=condition=available --timeout=600s pod/jenkins-demo-ci -n jenkins
+      - kubectl port-forward jenkins-demo-ci 8080:8080
+
+

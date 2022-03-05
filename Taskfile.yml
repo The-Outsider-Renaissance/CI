@@ -6,6 +6,7 @@ dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
 includes:
   concourse: ./charts/concourse.yaml
   drone: ./charts/drone.yaml
+  jenkins: ./charts/jenkins.yaml
 
 tasks:
   default:

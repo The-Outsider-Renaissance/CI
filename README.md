@@ -51,12 +51,7 @@ task drone:install
 task concourse:install
 ```
 
-- To install Argo Workflow:
+- To install Jenkins:
 ```sh
-task argo:install
-```
-
-- To install Gitlab:
-```sh
-task gitlab:install
+task jenkins:install
 ```
