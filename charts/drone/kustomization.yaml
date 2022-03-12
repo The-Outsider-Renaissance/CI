@@ -4,4 +4,4 @@ bases:
 - runner-role.yaml
 - deploy-runner.yaml
 - deploy-plugin.yaml
-namespace: drone
+namespace: drone2

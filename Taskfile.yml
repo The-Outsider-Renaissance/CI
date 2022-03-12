@@ -27,6 +27,7 @@ tasks:
     cmds:
       - k3d cluster delete testing
       - k3d cluster create --config config/cluster.yaml --wait
+      - until kubectl get deployment coredns -n kube-system -o go-template='{{.status.availableReplicas}}' | grep -v -e '<no value>'; do sleep 1s; done
     ignore_error: true
   tls:
     desc: Uses Mkcert to generate local SSL/TLS certificates and installs on a cluster-wide level using Nginx-ingress.
@@ -49,6 +50,7 @@ tasks:
       - helm repo add drone https://charts.drone.io
       - helm repo add concourse https://concourse-charts.storage.googleapis.com/
       - helm repo add hashicorp https://helm.releases.hashicorp.com
+      - helm repo add jenkins https://raw.githubusercontent.com/jenkinsci/kubernetes-operator/master/chart
       - helm repo update
     ignore_error: true
 

@@ -4,13 +4,18 @@ kind: Simple
 metadata:
   name: testing
 servers: 1
-agents: 4
+agents: 2
 kubeAPI:
   hostIP: "0.0.0.0"
   hostPort: "6446"
 image: rancher/k3s:v1.22.5-k3s2
 network: vpn2
 token: DE32uLmDJgigCxko8uCPvicoG3SMHW4gBzT32mYz4 # Mock up key
+volumes:
+  - volume: /Users/gruber/power/CI/config/tls/ca.pem:/etc/ssl/certs/ca.pem # same as `--volume '/my/host/path:/path/in/node@server:0;agent:*'`
+    nodeFilters:
+      - server:*
+      - agent:*
 ports:
   - port: 80:80
     nodeFilters:
@@ -26,10 +31,6 @@ ports:
     nodeFilters:
       - server:*
       - agent:*
-env:
-  - envVar: bar=baz
-    nodeFilters:
-      - server:0
 registries:
   create:
     name: registry.local.gd
@@ -37,9 +38,22 @@ registries:
     hostPort: "5001"
   config: |
     mirrors:
-      "registry.local.gd":
+      "registry.local.gd:5001":
         endpoint:
           - http://registry.local.gd:5001
+      "docker.io":
+        endpoint:
+          - http://host.k3d.internal:5001
+      "host.k3d.internal:5001":
+        endpoint:
+          - http://host.k3d.internal:5001
+    configs:
+      "host.k3d.internal:5001":
+        tls:
+          ca_file: "/etc/ssl/certs/ca.pem"
+      "registry.local.gd:5001":
+        tls:
+          ca_file: "/etc/ssl/certs/ca.pem"
 options:
   k3d:
     wait: true

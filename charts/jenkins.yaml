@@ -12,6 +12,8 @@ tasks:
       - task: install:crd
       - task: install:operator
       - task: install:server
+      - kubectl wait --for=condition=available --timeout=600s deployment/jenkins-operator -n jenkins
+      - kubectl wait --for=condition=available --timeout=600s pod/jenkins-demo-ci -n jenkins
       - task: show
       - task: bridge
     ignore_error: true
@@ -47,17 +49,43 @@ tasks:
     dirs: charts/jenkins
     vars:
       JENKINS_USER:
-        sh: echo $(kubectl get secret jenkins-operator-credentials-demo-ci -n jenkins -o 'jsonpath={.data.user}' | base64 -d)
+        sh: echo $(kubectl get secret jenkins-operator-credentials-jenkins  -n jenkins -o 'jsonpath={.data.user}' | base64 -d)
       JENKINS_PASSWORD:
-        sh: echo $(kubectl get secret jenkins-operator-credentials-demo-ci -n jenkins -o 'jsonpath={.data.password}' | base64 -d)
+        sh: echo $(kubectl get secret jenkins-operator-credentials-jenkins  -n jenkins -o 'jsonpath={.data.password}' | base64 -d)
     cmds:
       - echo "Your user is {{.JENKINS_USER}}"
       - echo "Your password is {{.JENKINS_PASSWORD}}"
 
   bridge:
+    deps: [bridge:cloudflared, bridge:forward]
     dirs: charts/jenkins
     cmds:
-      - kubectl wait --for=condition=available --timeout=600s pod/jenkins-demo-ci -n jenkins
-      - kubectl port-forward jenkins-demo-ci 8080:8080
+      - echo "Finished bridging"
+  bridge:forward:
+    dirs: charts/jenkins
+    cmds:
+      - kubectl port-forward svc/jenkins-operator-http-jenkins 3012:8080
 
+  install:helm                                                          :
+    dirs: charts/jenkins
+    cmds:
+      - helm install jenkins-ci jenkins/jenkins-operator --create-namespace -n jenkins -f charts/jenkins/values.yaml --wait
 
+  generate:secret:
+    dirs: charts/dronea
+    cmds:
+      - |
+        cat << EOF > charts/jenkins/github-creds.yaml
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: github-credentials
+          stringData:
+            username: {{.GITHUB_USER}}
+            password: {{.GITHUB_TOKEN}}
+        EOF
+
+  bridge:cloudflared:
+    cmds:
+      - sleep 10
+      - cloudflared tunnel --hostname $JENKINS_HOSTNAME --url localhost:3012 --name jenkins

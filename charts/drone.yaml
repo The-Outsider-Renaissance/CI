@@ -64,9 +64,9 @@ tasks:
                 - name: DRONE_RESOURCE_LIMIT_MEMORY
                   value: "3000MiB"
                 - name: DRONE_RESOURCE_LIMIT_CPU
-                  value: "4000"
+                  value: "3000"
                 - name: DRONE_RESOURCE_REQUEST_CPU
-                  value: "2000"
+                  value: "1000"
         EOF
 
   generate:plugin:
@@ -126,14 +126,14 @@ tasks:
           DRONE_RPC_SECRET: {{.DRONE_RPC_SECRET}}
           DRONE_GITHUB_CLIENT_ID: {{.DRONE_CLIENT_ID}}
           DRONE_GITHUB_CLIENT_SECRET: {{.DRONE_CLIENT_SECRET}}
-          DRONE_GITHUB_ORG: {{.DRONE_USER_FILTER}}
+          DRONE_GITHUB_ORG: {{.GITHUB_ORG}}
           DRONE_USER_CREATE: {{.DRONE_USER_CREATE}}
           DRONE_YAML_ENDPOINT: "http://host.k3d.internal:3006"
           DRONE_YAML_SECRET: {{.DRONE_PLUGIN_SECRET}}
         EOF
 
   bridge:
-    deps: [bridge:server, bridge:plugin]
+    deps: [bridge:server, bridge:plugin, bridge:cloudflared]
     cmds:
         -  echo "Finished bridging."
 
@@ -142,7 +142,13 @@ tasks:
       DRONE_POD:
         sh: echo $(kubectl get pods --namespace drone -l "app.kubernetes.io/name=powerdrone,app.kubernetes.io/instance=drone" -o jsonpath="{.items[0].metadata.name}")
     cmds:
-        -  kubectl --namespace drone port-forward $DRONE_POD 3000:80
+      -  sleep 10
+      -  kubectl port-forward --namespace drone $DRONE_POD 3000:80
   bridge:plugin:
     cmds:
-        -  kubectl --namespace drone port-forward deployment/drone-plugin 3006:3000
+      -  sleep 10
+      -  kubectl port-forward --namespace drone deployment/drone-plugin 3006:3000
+  bridge:cloudflared:
+    cmds:
+      - sleep 10
+      - cloudflared tunnel --hostname $DRONE_URI --url localhost:3000 --name drone
