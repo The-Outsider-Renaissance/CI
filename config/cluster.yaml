@@ -8,7 +8,7 @@ agents: 2
 kubeAPI:
   hostIP: "0.0.0.0"
   hostPort: "6446"
-image: rancher/k3s:v1.20.4-k3s1
+image: rancher/k3s:v1.21.10-k3s1
 network: vpn2
 token: DE32uLmDJgigCxko8uCPvicoG3SMHW4gBzT32mYz4 # Mock up key
 ports:
@@ -55,9 +55,6 @@ options:
   k3s:
     extraArgs:
       - arg: --no-deploy=traefik
-        nodeFilters:
-          - server:*
-      - arg: --flannel-backend=none
         nodeFilters:
           - server:*
       - arg:  --tls-san=localhost,registry.local.gd,registry.localhost,127.0.0.1,localhost,power.local.gd,registry.local.gd

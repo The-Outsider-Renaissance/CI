@@ -5,11 +5,8 @@ jenkins:
   name: jenkins
   namespace: jenkins
   image: jenkins/jenkins:2.332.1-lts-jdk11
-  imagePullPolicy: Always
-  disableCSRFProtection: true
+  imagePullPolicy: IfNotPresent
   validateSecurityWarnings: false
-  serviceAccount:
-    annotations: {}
   seedJobs:
     - id: jenkins-operator
       targets: "cicd/jobs/*.jenkins"
@@ -18,7 +15,7 @@ jenkins:
       repositoryUrl: https://github.com/jenkinsci/kubernetes-operator.git
   resources:
     limits:
-      cpu: 1000m
+      cpu: 2000m
       memory: 2Gi
     requests:
       cpu: 250m
@@ -58,18 +55,15 @@ jenkins:
       version: "2.23"
     - name: token-macro
       version: "280.v97a_82642793c"
-
+  plugins:
+    - name: simple-theme-plugin
+      version: "0.5.1"
   # volumeMounts are mounts for Jenkins pod
   # Note that attempting to overwrite default mount settings for restricted,
   # non-configurable volumeMounts will result in Operator error
   # See https://jenkinsci.github.io/kubernetes-operator/docs/installation/#note-on-restricted-jenkins-controller-pod-volumemounts for details
-  volumeMounts: []
   authorizationStrategy: createUser
-  securityContext:
-    runAsUser: 1000
-    fsGroup: 1000
-
-  # http Jenkins service
+  # http Jenkins servic
   # See https://jenkinsci.github.io/kubernetes-operator/docs/getting-started/latest/schema/#github.com/jenkinsci/kubernetes-operator/pkg/apis/jenkins/v1alpha2.Service for details
   #service:
   # slave Jenkins service
@@ -98,7 +92,6 @@ jenkins:
     periodSeconds: 10
     successThreshold: 1
     timeoutSeconds: 8
-
   backup:
     enabled: false
 # operator is section for configuring operator deployment
@@ -106,13 +99,6 @@ operator:
   replicaCount: 1
   image: virtuslab/jenkins-operator:49bdf51
   imagePullPolicy: IfNotPresent
-  imagePullSecrets: []
-  nameOverride: ""
-  fullnameOverride: ""
-  resources: {}
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
 
 webhook:
   enabled: false
