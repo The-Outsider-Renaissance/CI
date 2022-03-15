@@ -72,7 +72,7 @@ tasks:
       - helm install jenkins-ci jenkins/jenkins-operator --create-namespace -n jenkins -f charts/jenkins/values.yaml --wait
 
   generate:secret:
-    dirs: charts/dronea
+    dirs: charts/jenkins
     cmds:
       - |
         cat << EOF > charts/jenkins/github-creds.yaml

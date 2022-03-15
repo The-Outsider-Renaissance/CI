@@ -8,14 +8,9 @@ agents: 2
 kubeAPI:
   hostIP: "0.0.0.0"
   hostPort: "6446"
-image: rancher/k3s:v1.22.5-k3s2
+image: rancher/k3s:v1.20.4-k3s1
 network: vpn2
 token: DE32uLmDJgigCxko8uCPvicoG3SMHW4gBzT32mYz4 # Mock up key
-volumes:
-  - volume: /Users/gruber/power/CI/config/tls/ca.pem:/etc/ssl/certs/ca.pem # same as `--volume '/my/host/path:/path/in/node@server:0;agent:*'`
-    nodeFilters:
-      - server:*
-      - agent:*
 ports:
   - port: 80:80
     nodeFilters:
@@ -47,13 +42,6 @@ registries:
       "host.k3d.internal:5001":
         endpoint:
           - http://host.k3d.internal:5001
-    configs:
-      "host.k3d.internal:5001":
-        tls:
-          ca_file: "/etc/ssl/certs/ca.pem"
-      "registry.local.gd:5001":
-        tls:
-          ca_file: "/etc/ssl/certs/ca.pem"
 options:
   k3d:
     wait: true
@@ -66,6 +54,12 @@ options:
         - settings.workerConnections=2048
   k3s:
     extraArgs:
+      - arg: --no-deploy=traefik
+        nodeFilters:
+          - server:*
+      - arg: --flannel-backend=none
+        nodeFilters:
+          - server:*
       - arg:  --tls-san=localhost,registry.local.gd,registry.localhost,127.0.0.1,localhost,power.local.gd,registry.local.gd
         nodeFilters:
           - server:*

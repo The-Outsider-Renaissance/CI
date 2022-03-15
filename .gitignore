@@ -5,3 +5,4 @@ charts/drone/deploy-plugin.yaml
 charts/drone/server.yaml
 config/vault/cluster-keys.json
 charts/jenkins/github-creds.yaml
+.vscode
